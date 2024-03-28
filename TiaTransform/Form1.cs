@@ -290,32 +290,64 @@ namespace TiaTransform
                         case "Bool":
                             type = "bool";
                             break;
+
                         case "Byte":
                             type = "byte";
                             break;
+
                         case "Word":
                             type = "ushort";
                             break;
+
                         case "DWord":
                             type = "uint";
                             break;
+
                         case "Int":
                             type = "short";
                             break;
+
                         case "DInt":
                             type = "int";
                             break;
-                        case "string": // String zaten işlenmiş
+                            
+                        case "Real":
+                            type = "float";
                             break;
+
+                        case "Char": // String zaten işlenmiş(yukarıda)
+                            type = "byte_";
+                            break;
+
+                        case "string": // String zaten işlenmiş(yukarıda)
+                            break;
+
                         case "Time":
-                            type = "System.TimeSpan";
+                            type = "int";
                             break;
+
+                        case "Time_Of_Day":
+                            type = "uint";
+                            break;
+                        
+                        case "Date":
+                            type = "ushort";
+                            break;
+
                         default:
                             type = "BilinmeyenTip"; // Bilinmeyen tip için placeholder kullan
                             break;
                     }
 
-                    classBuilder.AppendLine($"    public {type} {name} {{ get; set; }}");
+                    if (type == "byte_")
+                    {
+                        classBuilder.AppendLine($"    public byte {name} {{ get; set; }} // Örnek Kullanım: var CharData = (char)db{Nmc_DbNumber.Value}.{name}");
+                    }
+                    else
+                    {
+                        classBuilder.AppendLine($"    public {type} {name} {{ get; set; }}");
+                    }
+                    
                 }
             }
 
