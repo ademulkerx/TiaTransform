@@ -343,6 +343,10 @@ namespace TiaTransform
                     {
                         classBuilder.AppendLine($"    public byte {name} {{ get; set; }} // Örnek Kullanım: var CharData = (char)db{Nmc_DbNumber.Value}.{name}");
                     }
+                    else if (type == "float")
+                    {//db1.Data_3.ToString("0.00000")
+                        classBuilder.AppendLine($"    public {type} {name} {{ get; set; }} // Örnek Kullanım: float RealData = db{Nmc_DbNumber.Value}.{name}.ToString('0.00000')");
+                    }
                     else
                     {
                         classBuilder.AppendLine($"    public {type} {name} {{ get; set; }}");
