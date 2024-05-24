@@ -196,6 +196,7 @@
             this.Name = "Form1";
             this.RightToLeftLayout = true;
             this.Text = " TiaTransform";
+            this.Load += new System.EventHandler(this.Form1_Load);
             ((System.ComponentModel.ISupportInitialize)(this.radioGroup1.Properties)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.Nmc_DbNumber)).EndInit();
             this.ResumeLayout(false);
