@@ -84,8 +84,6 @@ namespace TiaTransform
                 case 1:      // HMI Tags
                     break;
 
-                case 2:      // Merkezi İzleme
-                    break;
 
                 case 3:      // Giriş/Çıkış (I/O) Durumu
                     break;
@@ -93,8 +91,6 @@ namespace TiaTransform
                 case 4:      // Sürücü Parametreleri
                     break;
 
-                case 5:      // İşlem Verileri
-                    break;
 
                 default:
                     break;
@@ -375,8 +371,8 @@ namespace TiaTransform
         {
             var lines = data.Split(new[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
 
-            int startIndex = Array.FindIndex(lines, line => line.Contains("STRUCT"));
-            int endIndex = Array.FindIndex(lines, line => line.Contains("BEGIN")) - 1;
+            int startIndex = Array.FindIndex(lines, line => line.Contains("VAR"));
+            int endIndex = Array.FindIndex(lines, line => line.Contains("END_VAR")) - 1;
 
             if (startIndex == -1 || endIndex == -1 || endIndex < startIndex)
             {
@@ -403,7 +399,7 @@ namespace TiaTransform
 
             foreach (var line in lines)
             {
-                if (line.Contains("Struct"))// Eğer Struct ifadesi var ise direkt bir class oluşturulacak yok ise normal değişkenler oluşturulacak
+                if (line.Contains("Struct") || line.Contains("VAR"))// Eğer Struct ifadesi var ise direkt bir class oluşturulacak yok ise normal değişkenler oluşturulacak
                 {
                     var Line = line.Replace(" ", "").Replace(";", "").Trim();
 
@@ -422,7 +418,7 @@ namespace TiaTransform
 
                 }
                  
-                else if (line.Contains("END_STRUCT"))
+                else if (line.Contains("END_STRUCT") || line.Contains("END_VAR"))
                 {
                     currentClass.AppendLine("}");
                 }
@@ -540,6 +536,7 @@ namespace TiaTransform
 
                 }
             }
+            currentClass.AppendLine("}");
 
             return currentClass.ToString();
 

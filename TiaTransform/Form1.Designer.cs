@@ -166,6 +166,11 @@
             // 
             this.Nmc_DbNumber.Font = new System.Drawing.Font("Microsoft Sans Serif", 20.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
             this.Nmc_DbNumber.Location = new System.Drawing.Point(468, 264);
+            this.Nmc_DbNumber.Maximum = new decimal(new int[] {
+            1000,
+            0,
+            0,
+            0});
             this.Nmc_DbNumber.Name = "Nmc_DbNumber";
             this.Nmc_DbNumber.Size = new System.Drawing.Size(138, 38);
             this.Nmc_DbNumber.TabIndex = 18;
