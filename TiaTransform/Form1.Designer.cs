@@ -77,10 +77,8 @@
             this.radioGroup1.Properties.Items.AddRange(new DevExpress.XtraEditors.Controls.RadioGroupItem[] {
             new DevExpress.XtraEditors.Controls.RadioGroupItem(null, "Direkt DB", true, null, ""),
             new DevExpress.XtraEditors.Controls.RadioGroupItem(null, "HMI Tags"),
-            new DevExpress.XtraEditors.Controls.RadioGroupItem(null, "Merkezi İzleme"),
             new DevExpress.XtraEditors.Controls.RadioGroupItem(null, "Giriş/Çıkış (I/O) Durumu"),
-            new DevExpress.XtraEditors.Controls.RadioGroupItem(null, "Sürücü Parametreleri"),
-            new DevExpress.XtraEditors.Controls.RadioGroupItem(null, "İşlem Verileri")});
+            new DevExpress.XtraEditors.Controls.RadioGroupItem(null, "Sürücü Parametreleri")});
             this.radioGroup1.Size = new System.Drawing.Size(173, 204);
             this.radioGroup1.TabIndex = 10;
             this.radioGroup1.SelectedIndexChanged += new System.EventHandler(this.radioGroup1_SelectedIndexChanged);

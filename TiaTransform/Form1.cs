@@ -421,7 +421,7 @@ namespace TiaTransform
                     currentClass.AppendLine("{");
 
                 }
-
+                 
                 else if (line.Contains("END_STRUCT"))
                 {
                     currentClass.AppendLine("}");
@@ -443,63 +443,62 @@ namespace TiaTransform
                         type = _data[1];
                     }
 
-                    if (type.Contains("Bool"))
+                    if (type == "Bool")
                     {
                         type = "bool";
                         currentClass.AppendLine($"    public {type} {name} {{ get; set; }}");
                     }
-                    else if (type.Contains("Byte"))
+                    else if (type == "Byte")
                     {
                         type = "byte";
                         currentClass.AppendLine($"    public {type} {name} {{ get; set; }}");
                     }
-                    else if (type.Contains("Word"))
+                    else if (type == "Word")
                     {
                         type = "ushort";
                         currentClass.AppendLine($"    public {type} {name} {{ get; set; }}");
                     }
-                    else if (type.Contains("DWord"))
+                    else if (type == "DWord")
                     {
                         type = "uint";
                         currentClass.AppendLine($"    public {type} {name} {{ get; set; }}");
                     }
-                    else if (type.Contains("LWord"))
+                    else if (type == "LWord")
                     {
                         type = "ulong";
                         currentClass.AppendLine($"    public {type} {name} {{ get; set; }}");
                     }
-                    else if (type.Contains("Int"))
+                    else if (type == "Int")
                     {
                         type = "short";
                         currentClass.AppendLine($"    public {type} {name} {{ get; set; }}");
                     }
-                    else if (type.Contains("DInt"))
+                    else if (type == "DInt")
                     {
                         type = "int";
                         currentClass.AppendLine($"    public {type} {name} {{ get; set; }}");
                     }
-                    else if (type.Contains("LInt"))
+                    else if (type == "LInt")
                     {
                         type = "long";
                         currentClass.AppendLine($"    public {type} {name} {{ get; set; }}");
                     }
-                    else if (type.Contains("Real"))
+                    else if (type == "Real")
                     {
                         type = "float";
                         currentClass.AppendLine($"    public {type} {name} {{ get; set; }}");
                     }
-                    else if (type.Contains("LReal"))
+                    else if (type == "LReal")
                     {
                         type = "double";
                         currentClass.AppendLine($"    public {type} {name} {{ get; set; }}");
                     }
-                    else if (type.Contains("Char")) // String zaten işlenmiş(yukarıda)
+                    else if (type == "Char") // String zaten işlenmiş(yukarıda)
                     {
-                        
                         type = "char";
                         currentClass.AppendLine($"    public {type} {name} {{ get; set; }}");
                     }
-                    else if (type.Contains("String"))
+                    else if (type == "String")
                     {
                         var match = Regex.Match(type, @"\[(\d+)\]");
                         int stringSize = 254;
@@ -511,17 +510,17 @@ namespace TiaTransform
                         currentClass.AppendLine($"    [S7String(S7StringType.S7String, {stringSize})]");
                         currentClass.AppendLine($"    public string {name} {{ get; set; }}");
                     }
-                    else if (type.Contains("Time"))
+                    else if (type == "Time")
                     {
                         type = "int";
                         currentClass.AppendLine($"    public {type} {name} {{ get; set; }}");
                     }
-                    else if (type.Contains("Time_Of_Day"))
+                    else if (type == "Time_Of_Day")
                     {
                         type = "uint";
                         currentClass.AppendLine($"    public {type} {name} {{ get; set; }}");
                     }
-                    else if (type.Contains("Date"))
+                    else if (type == "Date")
                     {
                         type = "ushort";
                         currentClass.AppendLine($"    public {type} {name} {{ get; set; }}");
