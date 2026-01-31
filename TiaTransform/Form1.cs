@@ -77,11 +77,17 @@ namespace TiaTransform
             {
 
                 case 0:      // Direkt DB
-                    var data = PlcTagImportFromText_V3(Txt_Plc.Text, (int)Nmc_DbNumber.Value);
+                    //var data = PlcTagImportFromText_V3(Txt_Plc.Text, (int)Nmc_DbNumber.Value);
+                    var data = GenerateClassFromPlcTags(Txt_Plc.Text, (int)Nmc_DbNumber.Value);
                     Txt_Pc.Text = data;
                     break;
 
-                case 1:      // HMI Tags
+                case 1:      // Tag - Offset
+
+                    var tag = GenerateTagMapFromText(Txt_Plc.Text, (int)Nmc_DbNumber.Value);
+                    Txt_Pc.Text = tag;
+
+
                     break;
 
 
@@ -99,494 +105,233 @@ namespace TiaTransform
 
         #endregion
 
-
-
-        #region Data Convert
-
-
-
-        public string PlcTagImportFromText_v1(string data)
+        public string convertType(string dataType)
         {
-            int startIndex = data.IndexOf("//TiaTransform\r\n   STRUCT") + "//TiaTransform\r\n   STRUCT".Length;
-            int endIndex = data.IndexOf("   END_STRUCT;\r\n\r\n\r\nBEGIN;");
-            string extractedData = data.Substring(startIndex, endIndex - startIndex).Trim();
-
-            string[] lines = extractedData.Split(new[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
-
-            List<string> dataList = new List<string>();
-
-
-            foreach (string line in lines)
+            string csharpType = "";
+            if (dataType == "bool")
             {
-                // Her bir satırı ':' karakterine göre böler ve gereksiz boşlukları temizler
-                string[] parts = line.Split(':');
-                if (parts.Length > 1)
-                {
-                    string name = parts[0].Trim();
-                    string type = parts[1].Trim().Split(' ')[0]; // ';' karakterinden önceki kısmı alır
-                    dataList.Add($"{name} : {type}");
-                }
+                csharpType = "bool";
             }
-
-
-
-            // C# class yapısına uygun hale getirmek için bir StringBuilder kullanılabilir.
-            var classBuilder = new StringBuilder();
-            classBuilder.AppendLine($"public class DB{Nmc_DbNumber.Value}");
-            classBuilder.AppendLine("{");
-
-
-            foreach (string line in dataList)
+            else if (dataType == "byte" || dataType == "usint" || dataType == "sint")
             {
-                string[] parts = line.Split(':');
-                if (parts.Length > 1)
-                {
-                    string name = parts[0].Trim();
-                    name = name.Replace(":", "");
-                    string type = parts[1].Trim().Split(' ')[0];
-                    type = type.Replace(";", "");
-
-                    // String için özel durumu ele alma
-                    int stringSize = -1; // String boyutu için varsayılan değer
-                    if (type.StartsWith("String"))
-                    {
-                        var match = Regex.Match(type, @"\[(\d+)\]");
-                        if (match.Success)
-                        {
-                            stringSize = int.Parse(match.Groups[1].Value);
-                            type = "String"; // C# tipini string olarak ayarla
-                        }
-                    }
-
-                    switch (type)
-                    {
-                        case "Bool":
-                            type = "bool";
-                            break;
-
-                        case "Byte":
-                            type = "byte";
-                            break;
-
-                        case "Word":
-                            type = "ushort";
-                            break;
-
-                        case "DWord":
-                            type = "uint";
-                            break;
-
-                        case "Int":
-                            type = "short";
-                            break;
-
-                        case "DInt":
-                            type = "int";
-                            break;
-
-                        case "String":
-                            if (stringSize == -1) // Eğer boyut belirtilmemişse varsayılan bir değer kullan
-                            {
-                                stringSize = 254; // Varsayılan string boyutu
-                            }
-                            classBuilder.AppendLine($"    [S7String(S7StringType.S7String, {stringSize})]");
-                            type = "string";
-                            break;
-
-                        case "Time":
-                            type = "System.TimeSpan";
-                            break;
-
-                        default:
-                            type = "BilinmeyenTip"; // Bilinmeyen tip için genel bir tip kullan
-                            break;
-                    }
-
-                    classBuilder.AppendLine($"    public {type} {name} {{ get; set; }}");
-
-                }
+                csharpType = "byte";
             }
-
-
-            classBuilder.AppendLine("}");
-
-
-
-            return classBuilder.ToString();
-        }
-
-
-        // V2 çalışıyor tek eksik şimdilik struc yapı
-        public string PlcTagImportFromText_V2(string data)
-        {
-            int startIndex = data.IndexOf("//TiaTransform\r\n   STRUCT") + "//TiaTransform\r\n   STRUCT".Length;
-            int endIndex = data.IndexOf("BEGIN") - 2;
-
-            if (startIndex == -1 || endIndex == -1 || endIndex < startIndex)
+            else if (dataType == "word")
             {
-                return "Veri içerisinde STRUCT veya END_STRUCT bulunamadı.";
+                csharpType = "ushort";
             }
-
-            string extractedData = data.Substring(startIndex + "STRUCT".Length, endIndex - startIndex - "STRUCT".Length).Trim();
-
-            if (string.IsNullOrWhiteSpace(extractedData))
+            else if (dataType == "ınt")
             {
-                return "STRUCT ve END_STRUCT arasında veri bulunamadı.";
+                csharpType = "short";
             }
-
-            string[] lines = extractedData.Split(new[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
-
-            List<string> dataList = new List<string>();
-
-            foreach (string line in lines)
+            else if (dataType == "uint")
             {
-                string[] parts = line.Split(':');
-                if (parts.Length > 1)
-                {
-                    string name = parts[0].Trim();
-                    string type = parts[1].Trim().Split(' ')[0];
-
-                    if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(type))
-                    {
-                        continue; // İsim veya tip boşsa bu satırı atla
-                    }
-
-                    dataList.Add($"{name} : {type}");
-                }
-                else
-                {
-                    continue; // ':' içermeyen satırları atla
-                }
+                csharpType = "ushort";
             }
-
-            if (!dataList.Any())
+            else if (dataType == "dword")
             {
-                return "Uygun veri satırları bulunamadı.";
+                csharpType = "uınt";
             }
-
-            var classBuilder = new StringBuilder();
-            classBuilder.AppendLine($"public class DB{Nmc_DbNumber.Value}");
-            classBuilder.AppendLine("{");
-
-            foreach (string line in dataList)
+            else if (dataType == "dınt")
             {
-                string[] parts = line.Split(':');
-                if (parts.Length > 1)
-                {
-                    string name = parts[0].Trim().Replace(":", "");
-                    string type = parts[1].Trim().Split(' ')[0].Replace(";", "");
-
-                    int stringSize = 254; // Varsayılan string boyutu
-                    if (type.StartsWith("String"))
-                    {
-                        var match = Regex.Match(parts[1].Trim(), @"\[(\d+)\]");
-                        if (match.Success)
-                        {
-                            stringSize = int.Parse(match.Groups[1].Value);
-                        }
-                        type = "string";
-                        classBuilder.AppendLine($"    [S7String(S7StringType.S7String, {stringSize})]");
-                    }
-
-                    switch (type)
-                    {
-                        case "Bool":
-                            type = "bool";
-                            break;
-
-                        case "Byte":
-                            type = "byte";
-                            break;
-
-                        case "Word":
-                            type = "ushort";
-                            break;
-
-                        case "DWord":
-                            type = "uint";
-                            break;
-
-                        case "Int":
-                            type = "short";
-                            break;
-
-                        case "DInt":
-                            type = "int";
-                            break;
-
-                        case "Real":
-                            type = "float";
-                            break;
-
-                        case "Char": // String zaten işlenmiş(yukarıda)
-                            type = "byte_";
-                            break;
-
-                        case "string": // String zaten işlenmiş(yukarıda)
-                            break;
-
-                        case "Time":
-                            type = "int";
-                            break;
-
-                        case "Time_Of_Day":
-                            type = "uint";
-                            break;
-
-                        case "Date":
-                            type = "ushort";
-                            break;
-
-                        default:
-                            type = "BilinmeyenTip"; // Bilinmeyen tip için placeholder kullan
-                            break;
-                    }
-
-                    if (type == "byte_")
-                    {
-                        classBuilder.AppendLine($"    public byte {name} {{ get; set; }} // Örnek Kullanım: var CharData = (char)db{Nmc_DbNumber.Value}.{name}");
-                    }
-                    else if (type == "float")
-                    {//db1.Data_3.ToString("0.00000")
-                        classBuilder.AppendLine($"    public {type} {name} {{ get; set; }} // Örnek Kullanım: float RealData = db{Nmc_DbNumber.Value}.{name}.ToString('0.00000')");
-                    }
-                    else
-                    {
-                        classBuilder.AppendLine($"    public {type} {name} {{ get; set; }}");
-                    }
-
-                }
+                csharpType = "int";
             }
-
-            classBuilder.AppendLine("}");
-
-            return classBuilder.ToString();
-        }
-
-        bool strucEnable = false;
-        int strucSayac = 0;
-
-
-        public string PlcTagImportFromText_V3(string data, int MainClassNumber)
-        {
-            var lines = data.Split(new[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
-
-            int startIndex = Array.FindIndex(lines, line => line.Contains("VAR"));
-            int endIndex = Array.FindIndex(lines, line => line.Contains("END_VAR")) - 1;
-
-            if (startIndex == -1 || endIndex == -1 || endIndex < startIndex)
+            else if (dataType == "real")
             {
-                // Hata durumu veya uyarı mesajı
+                csharpType = "float";
+            }
+            else if (dataType.StartsWith("string"))
+            {
+                csharpType = "string";
             }
             else
             {
-                // `startIndex + 1` dahil ve `endIndex -1 ` dahil aralığı al ve lines e aktar...
-                lines = lines.Skip(startIndex + 1).Take(endIndex - startIndex).ToArray();
+                csharpType = ""; // Bilinmeyen tip
             }
+            return csharpType;
+        }
 
-            // Artık temiz bir veri var...
+        #region Data Convert
+        public string GenerateClassFromPlcTags(string rawText, int dbNumber)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine($"public class DB{dbNumber}");
+            sb.AppendLine("{");
 
-            var classDefinitions = new Stack<StringBuilder>();
-            StringBuilder currentClass = new StringBuilder();
-
-            string className = null;
-
-
-            currentClass.AppendLine($"public class DB{MainClassNumber}");
-            currentClass.AppendLine("{");
-
-
+            var lines = rawText.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
 
             foreach (var line in lines)
             {
-                if (line.Contains("Struct") || line.Contains("VAR"))// Eğer Struct ifadesi var ise direkt bir class oluşturulacak yok ise normal değişkenler oluşturulacak
+                var parts = line.Split('\t');
+                if (parts.Length < 3)
+                    continue;
+
+                string name = parts[1].Trim();
+                string dataType = parts[2].Trim().ToLower();
+
+                string comment = "";
+                if (parts.Length == 12)
+                    comment = parts[11].Trim().ToLower();
+
+                string csharpType;
+
+                if (dataType == "bool")
                 {
-                    var Line = line.Replace(" ", "").Replace(";", "").Trim();
-
-                    var _data = Line.Split(':');
-
-                    string name = "";
-                    string type = "";
-                    if (_data.Length == 2)
-                    {
-                        name = _data[0];
-                        type = _data[1];
-                    }
-                    currentClass.AppendLine($"    public _{name} {name} {{ get; set; }}");
-                    currentClass.AppendLine($"public class _{name}");
-                    currentClass.AppendLine("{");
-
+                    csharpType = "bool";
                 }
-                 
-                else if (line.Contains("END_STRUCT") || line.Contains("END_VAR"))
+                else if (dataType == "byte" || dataType == "usint" || dataType == "sint")
                 {
-                    currentClass.AppendLine("}");
+                    csharpType = "byte";
                 }
+                else if (dataType == "word")
+                {
+                    csharpType = "ushort";
+                }
+                else if (dataType == "ınt")
+                {
+                    csharpType = "short";
+                }
+                else if (dataType == "uint")
+                {
+                    csharpType = "ushort";
+                }
+                else if (dataType == "dword")
+                {
+                    csharpType = "uınt";
+                }
+                else if (dataType == "dınt")
+                {
+                    csharpType = "int";
+                }
+                else if (dataType == "real")
+                {
+                    csharpType = "float";
+                }
+                else if (dataType.StartsWith("string"))
+                {
+                    var match = Regex.Match(dataType, @"\[(\d+)\]");
+                    int stringSize = match.Success ? int.Parse(match.Groups[1].Value) : 254;
 
+
+                    sb.AppendLine($"");
+                    sb.AppendLine($"    [S7String(S7StringType.S7String, {stringSize})]");
+                    csharpType = "string";
+                }
                 else
                 {
-                    var Line = line.Replace(" ", "").Replace(";", "").Trim();
+                    continue; // Bilinmeyen tip
+                }
+                if (comment != "")
+                    sb.AppendLine($"    /// <summary> {comment} </summary>");
 
-                    var _data = Line.Split(':');
+                sb.AppendLine($"    public {csharpType} {name} {{ get; set; }}");
+            }
+
+            sb.AppendLine("}");
+            return sb.ToString();
+        }
 
 
+        public string GenerateTagMapFromText(string rawText, int dbNumber)
+        {
+            var entries = new List<string>();
+            var lines = rawText.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
 
-                    string name = "";
-                    string type = "";
-                    if (_data.Length == 2)
-                    {
-                        name = _data[0];
-                        type = _data[1];
-                    }
+            foreach (var line in lines)
+            {
+                var parts = line.Split('\t');
 
-                    if (type == "Bool")
+                if (parts.Length < 4)
+                    continue;
+
+                string name = parts[1].Trim();
+                string dataType = parts[2].Trim().ToLower();
+                string offsetStr = parts[3].Trim();
+                int strByteLength = 254; //Max string alanı
+                bool strData = false;
+
+                //Eğer type string ise 
+                if (dataType.Contains("string"))
+                {
+                    strData = true;
+                    if (dataType.Contains("["))//Alan belirtilmiş
                     {
-                        type = "bool";
-                        currentClass.AppendLine($"    public {type} {name} {{ get; set; }}");
-                    }
-                    else if (type == "Byte")
-                    {
-                        type = "byte";
-                        currentClass.AppendLine($"    public {type} {name} {{ get; set; }}");
-                    }
-                    else if (type == "Word")
-                    {
-                        type = "ushort";
-                        currentClass.AppendLine($"    public {type} {name} {{ get; set; }}");
-                    }
-                    else if (type == "DWord")
-                    {
-                        type = "uint";
-                        currentClass.AppendLine($"    public {type} {name} {{ get; set; }}");
-                    }
-                    else if (type == "LWord")
-                    {
-                        type = "ulong";
-                        currentClass.AppendLine($"    public {type} {name} {{ get; set; }}");
-                    }
-                    else if (type == "Int")
-                    {
-                        type = "short";
-                        currentClass.AppendLine($"    public {type} {name} {{ get; set; }}");
-                    }
-                    else if (type == "DInt")
-                    {
-                        type = "int";
-                        currentClass.AppendLine($"    public {type} {name} {{ get; set; }}");
-                    }
-                    else if (type == "LInt")
-                    {
-                        type = "long";
-                        currentClass.AppendLine($"    public {type} {name} {{ get; set; }}");
-                    }
-                    else if (type == "Real")
-                    {
-                        type = "float";
-                        currentClass.AppendLine($"    public {type} {name} {{ get; set; }}");
-                    }
-                    else if (type == "LReal")
-                    {
-                        type = "double";
-                        currentClass.AppendLine($"    public {type} {name} {{ get; set; }}");
-                    }
-                    else if (type == "Char") // String zaten işlenmiş(yukarıda)
-                    {
-                        type = "char";
-                        currentClass.AppendLine($"    public {type} {name} {{ get; set; }}");
-                    }
-                    else if (type == "String")
-                    {
-                        var match = Regex.Match(type, @"\[(\d+)\]");
-                        int stringSize = 254;
-                        if (match.Success)
-                        {
-                            stringSize = int.Parse(match.Groups[1].Value);
-                        }
-                        // type = "string";
-                        currentClass.AppendLine($"    [S7String(S7StringType.S7String, {stringSize})]");
-                        currentClass.AppendLine($"    public string {name} {{ get; set; }}");
-                    }
-                    else if (type == "Time")
-                    {
-                        type = "int";
-                        currentClass.AppendLine($"    public {type} {name} {{ get; set; }}");
-                    }
-                    else if (type == "Time_Of_Day")
-                    {
-                        type = "uint";
-                        currentClass.AppendLine($"    public {type} {name} {{ get; set; }}");
-                    }
-                    else if (type == "Date")
-                    {
-                        type = "ushort";
-                        currentClass.AppendLine($"    public {type} {name} {{ get; set; }}");
+                        strByteLength = int.Parse(dataType.Split('[')[1].Replace("[","").Replace("]", ""));
                     }
                     else
                     {
-                        type = "BilinmeyenTip"; // Bilinmeyen tip için placeholder kullan
-                        currentClass.AppendLine($"    public {type} {name} {{ get; set; }}");
+                        strByteLength = 254; //Max string alanı
                     }
-
-
-
-
-                    // güüncelleme yaparken eğer array tipinde veri okumaları yaparsak tanımlamarak bu şekilde olacak:
-                    // Burada 10 elemanlı bir array double tanımladık.
-                    //public double[] ValuesLREAL { get; set; } = new double[10];
+                    dataType = "string";
 
                 }
+
+                if (!offsetStr.Contains("."))
+                    continue;
+
+                var offsetParts = offsetStr.Split('.');
+                if (!int.TryParse(offsetParts[0], out int byteOffset))
+                    continue;
+
+                int bitOffset = (offsetParts.Length > 1 && int.TryParse(offsetParts[1], out int b)) ? b : 0;
+
+                string Address = null;
+                string DataType_plc = null;
+                string DataType_pc = null;
+
+                if (dataType == "bool")
+                    Address = $"DB{dbNumber}.DBX{byteOffset}.{bitOffset}";
+
+                else if (dataType == "byte" || dataType == "usınt" || dataType == "sınt")
+                    Address = $"DB{dbNumber}.DBB{byteOffset}";
+
+                else if (dataType == "word" || dataType == "ınt" || dataType == "uınt")
+                    Address = $"DB{dbNumber}.DBW{byteOffset}";
+
+                else if (dataType == "dword" || dataType == "dınt" || dataType == "real" || dataType == "float")
+                    Address = $"DB{dbNumber}.DBD{byteOffset}";
+
+                else if (dataType == "string")
+                    Address = $"DB{dbNumber}.DBS{byteOffset}[{strByteLength}]";
+
+                else
+                    continue;
+
+                DataType_plc = dataType;
+                DataType_pc = convertType(dataType);
+
+
+                if (string.IsNullOrEmpty(Address))
+                    continue;
+
+                //entries.Add($"    {{ \"{name}\",  new TagInfo(\"{Address}\", \"{DataType_plc}\", \"{DataType_pc}\") }}");
+                entries.Add($"{{ \"{name}\", new TagInfo(\"{Address}\", \"{DataType_plc}\", \"{DataType_pc}\") }}");
             }
-            currentClass.AppendLine("}");
 
-            return currentClass.ToString();
+            //var sb = new StringBuilder();
+            //sb.AppendLine($"        public static readonly Dictionary<string, TagInfo> db{dbNumber} = new Dictionary<string, TagInfo>");
+            //sb.AppendLine("        {");
+            //sb.AppendLine("            " + string.Join(",\n\t\t", entries));
+            //sb.AppendLine("        };");
+            var sb = new StringBuilder();
+            sb.AppendLine($"\t\tpublic static readonly Dictionary<string, TagInfo> db{dbNumber} = new Dictionary<string, TagInfo>");
+            sb.AppendLine("\t\t{"); // Bu satırda \t\t var
 
+            // Ayırıcı: Virgülden sonra yeni satır, ardından üç tab boşluğu (\t\t\t)
+            // Üç tab (örneğin) kullanarak tüm satırların aynı hizada olmasını sağlayın.
+            string separator = ",\n\t\t\t";
+
+            // 1. İlk elemanın başına gelecek girintiyi (varsayımsal olarak \t\t\t) ekleyin
+            sb.Append("\t\t\t");
+
+            // 2. Birleştirilmiş listeyi ekleyin, ayırıcı diğer elemanların girintisini sağlar
+            sb.Append(string.Join(separator, entries));
+
+            sb.AppendLine(); // Son elemandan sonraki satır atlaması
+            sb.AppendLine("\t\t};");
+
+            return sb.ToString();
         }
-
-        private string ConvertPlcTypeToCSharpType(string plcType)
-        {
-            switch (plcType)
-            {
-                case "Bool":
-                    return "bool";
-
-                case "Byte":
-                    return "byte";
-
-                case "Word":
-                    return "ushort";
-
-                case "DWord":
-                    return "uint";
-
-                case "Int":
-                    return "short";
-
-                case "DInt":
-                    return "int";
-
-                case "Real":
-                    return "float";
-
-                case "S5Time":
-                case "Time":
-                case "Time_Of_Day":
-                case "Date_And_Time":
-                    return "DateTime";
-
-                case "Char":
-                case "S7Char":
-                    return "char";
-
-                case "String":
-                    return "string";
-
-                // Burada daha fazla PLC tipi ekleyebilirsiniz
-                default:
-                    return "object"; // Bilinmeyen veya desteklenmeyen tipler için genel bir tip
-            }
-        }
-
-
 
 
         #endregion

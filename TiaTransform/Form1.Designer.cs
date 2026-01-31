@@ -75,8 +75,8 @@
             this.radioGroup1.Properties.Appearance.Options.UseForeColor = true;
             this.radioGroup1.Properties.BorderStyle = DevExpress.XtraEditors.Controls.BorderStyles.Simple;
             this.radioGroup1.Properties.Items.AddRange(new DevExpress.XtraEditors.Controls.RadioGroupItem[] {
-            new DevExpress.XtraEditors.Controls.RadioGroupItem(null, "Direkt DB", true, null, ""),
-            new DevExpress.XtraEditors.Controls.RadioGroupItem(null, "HMI Tags"),
+            new DevExpress.XtraEditors.Controls.RadioGroupItem(null, "Class", true, null, ""),
+            new DevExpress.XtraEditors.Controls.RadioGroupItem(null, "Tag - Address"),
             new DevExpress.XtraEditors.Controls.RadioGroupItem(null, "Giriş/Çıkış (I/O) Durumu"),
             new DevExpress.XtraEditors.Controls.RadioGroupItem(null, "Sürücü Parametreleri")});
             this.radioGroup1.Size = new System.Drawing.Size(173, 204);
@@ -167,7 +167,7 @@
             this.Nmc_DbNumber.Font = new System.Drawing.Font("Microsoft Sans Serif", 20.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
             this.Nmc_DbNumber.Location = new System.Drawing.Point(468, 264);
             this.Nmc_DbNumber.Maximum = new decimal(new int[] {
-            1000,
+            10000,
             0,
             0,
             0});
@@ -199,7 +199,7 @@
             this.Name = "Form1";
             this.RightToLeftLayout = true;
             this.Text = " TiaTransform";
-            this.Load += new System.EventHandler(this.Form1_Load);
+            this.TopMost = true;
             ((System.ComponentModel.ISupportInitialize)(this.radioGroup1.Properties)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.Nmc_DbNumber)).EndInit();
             this.ResumeLayout(false);
